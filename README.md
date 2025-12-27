@@ -406,17 +406,4 @@ npx serve -s build
 
 ---
 
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 📞 Support
-
-For questions or issues, please open an issue on GitHub or contact [your.email@example.com]
-
----
-
 **⭐ If you found this project helpful, please give it a star!**

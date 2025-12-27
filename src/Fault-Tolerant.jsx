@@ -5,14 +5,6 @@ import { AlertCircle, CheckCircle, XCircle, Database, TrendingUp } from 'lucide-
 // DATA MODELS & TYPES
 // ============================================================================
 
-const CanonicalEvent = {
-  client_id: '',
-  metric: '',
-  amount: 0,
-  timestamp: '',
-  event_hash: '', // For deduplication
-  ingested_at: '',
-};
 
 // ============================================================================
 // NORMALIZATION LAYER
@@ -321,14 +313,14 @@ export default function FaultTolerantSystem() {
     }
   };
 
-  const refreshAggregates = () => {
-    setAggregates(api.query({}));
-    setFailedEvents(api.getFailedEvents());
-  };
+  const refreshAggregates = useCallback(() => {
+  setAggregates(api.query({}));
+  setFailedEvents(api.getFailedEvents());
+}, [api]);
 
-  useEffect(() => {
-    refreshAggregates();
-  }, []);
+useEffect(() => {
+  refreshAggregates();
+}, [refreshAggregates]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-8">

@@ -1,70 +1,449 @@
-# Getting Started with Create React App
+# Fault-Tolerant Data Processing System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A robust data ingestion and processing system that handles unreliable data from multiple clients with built-in fault tolerance, deduplication, and graceful failure handling.
 
-## Available Scripts
+## 🎯 Project Overview
 
-In the project directory, you can run:
+This system receives events from multiple external clients that:
+- Do not follow a strict schema
+- Change formats without notice
+- May resend events
+- May fail mid-request
 
-### `npm start`
+The system ensures:
+- ✅ Normalized data processing
+- ✅ Duplicate event prevention
+- ✅ Safe partial failure handling
+- ✅ Consistent aggregated outputs
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🚀 Quick Start
 
-### `npm test`
+### Prerequisites
+- Node.js (v14 or higher)
+- npm (v6 or higher)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Installation
 
-### `npm run build`
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/fault-tolerant-system.git
+cd fault-tolerant-system
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Install dependencies
+npm install
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Start development server
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The application will open at `http://localhost:3000`
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 📁 Project Structure
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+fault-tolerant-system/
+├── src/
+│   ├── App.js              # Main application component
+│   ├── index.js            # Entry point
+│   └── index.css           # Global styles
+├── public/
+│   └── index.html
+├── package.json
+└── README.md
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Architecture Components
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+**EventNormalizer**
+- Flexible field mapping for inconsistent schemas
+- Type coercion (strings → numbers, various date formats)
+- Graceful handling of missing fields
+- Deterministic hash generation for deduplication
 
-## Learn More
+**EventStore**
+- Idempotent storage with deduplication
+- Processing log to prevent race conditions
+- Safe retry handling
+- Atomic state transitions
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+**DataProcessingAPI**
+- Event ingestion orchestration
+- Query and aggregation layer
+- Failed event tracking
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**React UI**
+- Manual event submission
+- Failure simulation toggle
+- Multi-view dashboard (Submit, Processed, Failed, Aggregates)
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 🎨 Features
 
-### Analyzing the Bundle Size
+### 1. Event Ingestion
+- Accepts events in flexible JSON format
+- Handles multiple field name variations
+- Processes events with missing or extra fields
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 2. Normalization Layer
+Converts raw events to canonical format:
 
-### Making a Progressive Web App
+**Input Example:**
+```json
+{
+  "source": "client_A",
+  "payload": {
+    "metric": "sale",
+    "amount": "1200",
+    "timestamp": "2024/01/01"
+  }
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+**Output (Canonical):**
+```json
+{
+  "client_id": "client_A",
+  "metric": "sale",
+  "amount": 1200,
+  "timestamp": "2024-01-01T00:00:00Z",
+  "event_hash": "abc123",
+  "ingested_at": "2024-01-15T10:30:00Z"
+}
+```
 
-### Advanced Configuration
+### 3. Idempotency & Deduplication
+- Content-based hash generation
+- Prevents double counting on retries
+- Safe concurrent request handling
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### 4. Partial Failure Handling
+- Events marked as "processing" during ingestion
+- Failed writes leave system in consistent state
+- Safe retry mechanism without data loss
 
-### Deployment
+### 5. Query & Aggregation API
+- Real-time aggregations by client and metric
+- Total counts and amounts
+- Extensible filtering system
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### 6. Interactive UI
+- **Submit View**: Manual event submission with JSON editor
+- **Processed View**: Successfully ingested events
+- **Failed View**: Events that failed validation or ingestion
+- **Aggregates View**: Real-time analytics and totals
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🧪 Testing the System
+
+### Test Case 1: Normal Event Processing
+1. Navigate to "Submit" tab
+2. Use the default JSON event
+3. Click "Submit Event"
+4. Verify event appears in "Processed" tab
+5. Check "Aggregates" tab for updated totals
+
+### Test Case 2: Duplicate Detection
+1. Submit the same event twice
+2. Second submission should show: "Event already processed (duplicate detected)"
+3. Verify only ONE event in "Processed" tab
+4. Aggregates should not double-count
+
+### Test Case 3: Database Failure Simulation
+1. Check "Simulate database failure" checkbox
+2. Click "Submit Event"
+3. Event should appear in "Failed" tab
+4. Uncheck the failure option
+5. Submit same event again
+6. Event should now succeed and appear in "Processed" tab
+
+### Test Case 4: Schema Flexibility
+
+Try these different formats:
+
+```json
+{
+  "client": "client_B",
+  "payload": {
+    "type": "purchase",
+    "value": 5000,
+    "time": "2024-12-01"
+  }
+}
+```
+
+```json
+{
+  "source": "client_C",
+  "payload": {
+    "metricName": "refund",
+    "sum": "250.50",
+    "created_at": "2024/12/15"
+  }
+}
+```
+
+All should normalize correctly!
+
+---
+
+## 💡 Design Decisions
+
+### What assumptions did you make?
+
+1. **Events are semantically unique** based on client_id, metric, amount, and timestamp (date only)
+2. **Duplicates are unintentional** - caused by retries, not legitimate repeated events
+3. **Missing fields can have defaults** - amount defaults to 0, timestamp to current time
+4. **Single-server deployment** - no distributed systems complexity needed for prototype
+5. **In-memory storage is acceptable** - would use PostgreSQL/Redis in production
+
+### How does your system prevent double counting?
+
+**Three-Layer Deduplication Strategy:**
+
+1. **Content-Based Hash Generation**
+   - Hash generated from semantic content (client_id, metric, amount, date)
+   - Same event produces identical hash regardless of retry timing
+   - Deterministic and reliable
+
+2. **Idempotent Storage Check**
+   ```javascript
+   if (this.events.has(hash)) {
+     return { success: true, duplicate: true };
+   }
+   if (this.processingLog.get(hash) === 'processing') {
+     return { success: false, retryable: true };
+   }
+   ```
+
+3. **Processing Log**
+   - Tracks event state: `not_seen` → `processing` → `completed`/`failed`
+   - Prevents concurrent processing during retry storms
+   - Acts as distributed lock in single-server context
+
+### What happens if the database fails mid-request?
+
+**Failure Flow:**
+1. Event normalized ✓
+2. Deduplication check ✓
+3. Processing log updated: `hash → "processing"` ✓
+4. Database write FAILS ✗
+5. Exception caught
+6. Processing log updated: `hash → "failed"`
+7. Error returned to client
+8. Client retries
+9. System allows retry (failed status)
+10. Retry succeeds, event committed
+
+**Guarantees:**
+- ✅ No data loss (client retries)
+- ✅ No double processing (hash prevents duplicates)
+- ✅ Consistent state (processing log tracks status)
+
+### What would break first at scale?
+
+**Priority Order:**
+
+1. **In-Memory Storage** (Breaks at: ~1M-10M events)
+   - Fix: Use PostgreSQL with unique constraints on event_hash
+   - Add Redis for processing log (distributed lock)
+
+2. **Synchronous Processing** (Breaks at: ~100-1000 req/sec)
+   - Fix: Add message queue (RabbitMQ/Kafka)
+   - Multiple workers process events async
+   - API returns 202 Accepted immediately
+
+3. **Content-Based Hashing** (Breaks at: High-frequency identical events)
+   - Fix: Include hour/minute in hash for finer granularity
+   - Add TTL to deduplication cache (24 hours)
+   - Allow client-provided idempotency keys
+
+4. **Aggregation Queries** (Breaks at: ~100K+ events)
+   - Fix: Add database indexes on filterable fields
+   - Pre-compute aggregates in background jobs
+   - Use time-series database (ClickHouse, TimescaleDB)
+
+5. **Single Point of Failure** (Breaks at: Server goes down)
+   - Fix: Deploy multiple app servers behind load balancer
+   - Use distributed lock (Redis Redlock)
+   - Database replication and failover
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐
+│   Client    │
+└──────┬──────┘
+       │ Raw Event (unreliable)
+       ▼
+┌─────────────────────┐
+│  API Layer          │
+│  (ingestEvent)      │
+└──────┬──────────────┘
+       │
+       ▼
+┌─────────────────────┐
+│ Normalization Layer │
+│ - Field mapping     │
+│ - Type conversion   │
+│ - Hash generation   │
+└──────┬──────────────┘
+       │ Canonical Event
+       ▼
+┌─────────────────────┐
+│ Storage Layer       │
+│ - Deduplication     │
+│ - Processing log    │
+│ - ACID guarantees   │
+└──────┬──────────────┘
+       │
+       ▼
+┌─────────────────────┐
+│ Query/Aggregation   │
+│ - Filter events     │
+│ - Compute totals    │
+└─────────────────────┘
+```
+
+---
+
+## 🛠️ Technologies Used
+
+- **React 18** - UI framework
+- **Lucide React** - Icon library
+- **Tailwind CSS** - Utility-first styling
+- **JavaScript ES6+** - Modern language features
+
+---
+
+## 📦 Dependencies
+
+```json
+{
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.263.1"
+  }
+}
+```
+
+---
+
+## 🔧 Available Scripts
+
+```bash
+# Start development server
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Eject from Create React App (irreversible)
+npm run eject
+```
+
+---
+
+## 🚀 Production Deployment
+
+### Build
+
+```bash
+npm run build
+```
+
+Creates optimized production build in `build/` folder.
+
+### Serve Static Build
+
+```bash
+npx serve -s build
+```
+
+### Deploy to Services
+
+- **Vercel**: `vercel --prod`
+- **Netlify**: Drag & drop `build/` folder
+- **GitHub Pages**: Use `gh-pages` package
+- **AWS S3**: Upload `build/` to S3 bucket with static hosting
+
+---
+
+## 🎯 Key Design Strengths
+
+✅ **Clean separation of concerns** - Normalization, storage, API clearly separated  
+✅ **Idempotent by design** - Same request N times = same result  
+✅ **Graceful degradation** - Handles missing fields without crashing  
+✅ **Observable** - Failed events logged separately for debugging  
+✅ **Extensible** - Easy to add new field mappings or clients  
+✅ **Testable** - Pure functions for hash generation and normalization  
+
+---
+
+## 📝 Future Enhancements
+
+- [ ] Persistent storage with PostgreSQL
+- [ ] Async processing with message queues
+- [ ] Client-specific schema configuration UI
+- [ ] Advanced filtering and search
+- [ ] Export aggregations to CSV/JSON
+- [ ] Real-time updates with WebSockets
+- [ ] Authentication and authorization
+- [ ] Rate limiting per client
+- [ ] Monitoring and alerting dashboard
+- [ ] API documentation with Swagger
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 👤 Author
+
+**Your Name**
+- GitHub: [@yourusername](https://github.com/yourusername)
+- LinkedIn: [Your Name](https://linkedin.com/in/yourprofile)
+
+---
+
+## 🙏 Acknowledgments
+
+- Assignment provided by [Company Name]
+- Built as part of Full Stack Internship application
+- Focused on system design, fault tolerance, and clean architecture
+
+---
+
+## 📞 Support
+
+For questions or issues, please open an issue on GitHub or contact [your.email@example.com]
+
+---
+
+**⭐ If you found this project helpful, please give it a star!**
